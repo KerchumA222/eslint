@@ -77,70 +77,70 @@ describe("SourceCodeUtil", () => {
 
     describe("getSourceCodeOfFiles()", () => {
 
-        it("should handle single string filename arguments", () => {
+        it("should handle single string filename arguments", async () => {
             const filename = getFixturePath("foo.js");
-            const sourceCode = getSourceCodeOfFiles(filename, { cwd: fixtureDir });
+            const sourceCode = await getSourceCodeOfFiles(filename, { cwd: fixtureDir });
 
             assert.isObject(sourceCode);
         });
 
-        it("should accept an array of string filenames", () => {
+        it("should accept an array of string filenames", async () => {
             const fooFilename = getFixturePath("foo.js");
             const barFilename = getFixturePath("bar.js");
-            const sourceCode = getSourceCodeOfFiles([fooFilename, barFilename], { cwd: fixtureDir });
+            const sourceCode = await getSourceCodeOfFiles([fooFilename, barFilename], { cwd: fixtureDir });
 
             assert.isObject(sourceCode);
         });
 
-        it("should accept a glob argument", () => {
+        it("should accept a glob argument", async () => {
             const glob = getFixturePath("*.js");
             const filename = getFixturePath("foo.js");
-            const sourceCode = getSourceCodeOfFiles(glob, { cwd: fixtureDir });
+            const sourceCode = await getSourceCodeOfFiles(glob, { cwd: fixtureDir });
 
             assert.isObject(sourceCode);
             assert.property(sourceCode, filename);
         });
 
-        it("should accept a relative filename", () => {
+        it("should accept a relative filename", async () => {
             const filename = "foo.js";
-            const sourceCode = getSourceCodeOfFiles(filename, { cwd: fixtureDir });
+            const sourceCode = await getSourceCodeOfFiles(filename, { cwd: fixtureDir });
 
             assert.isObject(sourceCode);
             assert.property(sourceCode, getFixturePath(filename));
         });
 
-        it("should accept a relative path to a file in a parent directory", () => {
+        it("should accept a relative path to a file in a parent directory", async () => {
             const filename = "../foo.js";
-            const sourceCode = getSourceCodeOfFiles(filename, { cwd: getFixturePath("nested") });
+            const sourceCode = await getSourceCodeOfFiles(filename, { cwd: getFixturePath("nested") });
 
             assert.isObject(sourceCode);
             assert.property(sourceCode, getFixturePath("foo.js"));
         });
 
-        it("should accept a callback", () => {
+        it("should accept a callback", async () => {
             const filename = getFixturePath("foo.js");
             const spy = sinon.spy();
 
             process.chdir(fixtureDir);
-            getSourceCodeOfFiles(filename, {}, spy);
+            await getSourceCodeOfFiles(filename, {}, spy);
             process.chdir(originalDir);
             assert(spy.calledOnce);
         });
 
-        it("should call the callback with total number of files being processed", () => {
+        it("should call the callback with total number of files being processed", async () => {
             const filename = getFixturePath("foo.js");
             const spy = sinon.spy();
 
             process.chdir(fixtureDir);
-            getSourceCodeOfFiles(filename, {}, spy);
+            await getSourceCodeOfFiles(filename, {}, spy);
             process.chdir(originalDir);
             assert.strictEqual(spy.firstCall.args[0], 1);
         });
 
-        it("should create an object with located filenames as keys", () => {
+        it("should create an object with located filenames as keys", async () => {
             const fooFilename = getFixturePath("foo.js");
             const barFilename = getFixturePath("bar.js");
-            const sourceCode = getSourceCodeOfFiles([fooFilename, barFilename], { cwd: fixtureDir });
+            const sourceCode = await getSourceCodeOfFiles([fooFilename, barFilename], { cwd: fixtureDir });
 
             assert.property(sourceCode, fooFilename);
             assert.property(sourceCode, barFilename);
@@ -149,6 +149,7 @@ describe("SourceCodeUtil", () => {
         it("should should not include non-existent filenames in results", () => {
             const filename = getFixturePath("missing.js");
 
+            // TODO: make the throwsAsync helper available here too
             assert.throws(() => {
                 getSourceCodeOfFiles(filename, { cwd: fixtureDir });
             }, `No files matching '${filename}' were found.`);
@@ -163,15 +164,15 @@ describe("SourceCodeUtil", () => {
 
         });
 
-        it("should obtain the sourceCode of a file", () => {
+        it("should obtain the sourceCode of a file", async () => {
             const filename = getFixturePath("foo.js");
-            const sourceCode = getSourceCodeOfFiles(filename, { cwd: fixtureDir });
+            const sourceCode = await getSourceCodeOfFiles(filename, { cwd: fixtureDir });
 
             assert.isObject(sourceCode);
             assert.instanceOf(sourceCode[filename], SourceCode);
         });
 
-        it("should obtain the sourceCode of JSX files", () => {
+        it("should obtain the sourceCode of JSX files", async () => {
             const filename = getFixturePath("jsx", "foo.jsx");
             const options = {
                 cwd: fixtureDir,
@@ -181,67 +182,67 @@ describe("SourceCodeUtil", () => {
                     }
                 }
             };
-            const sourceCode = getSourceCodeOfFiles(filename, options);
+            const sourceCode = await getSourceCodeOfFiles(filename, options);
 
             assert.isObject(sourceCode);
             assert.instanceOf(sourceCode[filename], SourceCode);
         });
 
-        it("should honor .eslintignore files by default", () => {
+        it("should honor .eslintignore files by default", async () => {
             const glob = getFixturePath("*.js");
             const unignoredFilename = getFixturePath("foo.js");
             const ignoredFilename = getFixturePath("ignored.js");
-            const sourceCode = getSourceCodeOfFiles(glob, { cwd: fixtureDir });
+            const sourceCode = await getSourceCodeOfFiles(glob, { cwd: fixtureDir });
 
             assert.property(sourceCode, unignoredFilename);
             assert.notProperty(sourceCode, ignoredFilename);
         });
 
-        it("should obtain the sourceCode of all files in a specified folder", () => {
+        it("should obtain the sourceCode of all files in a specified folder", async () => {
             const folder = getFixturePath("nested");
             const fooFile = getFixturePath("nested/foo.js");
             const barFile = getFixturePath("nested/bar.js");
-            const sourceCode = getSourceCodeOfFiles(folder, { cwd: fixtureDir });
+            const sourceCode = await getSourceCodeOfFiles(folder, { cwd: fixtureDir });
 
             assert.strictEqual(Object.keys(sourceCode).length, 2);
             assert.instanceOf(sourceCode[fooFile], SourceCode);
             assert.instanceOf(sourceCode[barFile], SourceCode);
         });
 
-        it("should accept cli options", () => {
+        it("should accept cli options", async () => {
             const pattern = getFixturePath("ext");
             const abcFile = getFixturePath("ext/foo.abc");
             const cliOptions = { extensions: [".abc"], cwd: fixtureDir };
-            const sourceCode = getSourceCodeOfFiles(pattern, cliOptions);
+            const sourceCode = await getSourceCodeOfFiles(pattern, cliOptions);
 
             assert.strictEqual(Object.keys(sourceCode).length, 1);
             assert.instanceOf(sourceCode[abcFile], SourceCode);
         });
 
-        it("should execute the callback function, if provided", () => {
+        it("should execute the callback function, if provided", async () => {
             const callback = sinon.spy();
             const filename = getFixturePath("foo.js");
 
-            getSourceCodeOfFiles(filename, { cwd: fixtureDir }, callback);
+            await getSourceCodeOfFiles(filename, { cwd: fixtureDir }, callback);
             assert(callback.calledOnce);
         });
 
-        it("should execute callback function once per file", () => {
+        it("should execute callback function once per file", async () => {
             const callback = sinon.spy();
             const fooFilename = getFixturePath("foo.js");
             const barFilename = getFixturePath("bar.js");
 
-            getSourceCodeOfFiles([fooFilename, barFilename], { cwd: fixtureDir }, callback);
+            await getSourceCodeOfFiles([fooFilename, barFilename], { cwd: fixtureDir }, callback);
             assert.strictEqual(callback.callCount, 2);
         });
 
-        it("should call callback function with total number of files with sourceCode", () => {
+        it("should call callback function with total number of files with sourceCode", async () => {
             const callback = sinon.spy();
             const firstFn = getFixturePath("foo.js");
             const secondFn = getFixturePath("bar.js");
             const thirdFn = getFixturePath("nested/foo.js");
 
-            getSourceCodeOfFiles([firstFn, secondFn, thirdFn], { cwd: fixtureDir }, callback);
+            await getSourceCodeOfFiles([firstFn, secondFn, thirdFn], { cwd: fixtureDir }, callback);
             assert(callback.calledWith(3));
         });
 
